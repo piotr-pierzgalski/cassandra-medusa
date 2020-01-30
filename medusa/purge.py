@@ -42,7 +42,7 @@ def main(config, max_backup_age=0, max_backup_count=0):
         # list all backups to purge based on count conditions
         backups_to_purge += backups_to_purge_by_count(backups, max_backup_count)
         # purge all candidate backups
-        purge_backups(storage, backups_to_purge, config.storage.fqdn)
+        purge_backups(storage, backups_to_purge)
 
         logging.debug('Emitting metrics')
         tags = ['medusa-node-backup', 'purge-error', 'PURGE-ERROR']
@@ -74,9 +74,21 @@ def backups_to_purge_by_count(backups, max_backup_count):
         return sorted_node_backups[:backups_to_remove_count]
     return list()
 
+# def backups_to_purge_by_name(backups, backup_name):
+#     """
+#     Return a list
+#     Returns the list of the backups to delete for a given name (1 name = 1 backup, but on N nodes).
+#     """
+#     return list(filter(lambda backup: backup.name = backup_name, backups)) or list()
 
-def purge_backups(storage, backups, fqdn):
+
+def purge_backups(storage, backups):
+    """
+    Core function to purge a list of node_backups
+    Used for node purge and backup delete (using a specific backup_name)
+    """
     logging.info("{} backups are candidate to be purged".format(len(backups)))
+    fqdns = set()
     nb_objects_purged = 0
     total_purged_size = 0
 
@@ -84,10 +96,12 @@ def purge_backups(storage, backups, fqdn):
         (purged_objects, purged_size) = purge_backup(storage, backup)
         nb_objects_purged += purged_objects
         total_purged_size += purged_size
+        fqdns.add(backup.fqdn)
 
-    (cleaned_objects_count, cleaned_objects_size) = cleanup_obsolete_files(storage, fqdn)
-    nb_objects_purged += cleaned_objects_count
-    total_purged_size += cleaned_objects_size
+    for fqdn in fqdns:
+        (cleaned_objects_count, cleaned_objects_size) = cleanup_obsolete_files(storage, fqdn)
+        nb_objects_purged += cleaned_objects_count
+        total_purged_size += cleaned_objects_size
 
     logging.info("Purged {} objects with a total size of {}".format(
         nb_objects_purged,
@@ -163,3 +177,35 @@ def get_file_paths_from_manifests_for_differential_backups(backups):
 
 def filter_differential_backups(backups):
     return list(filter(lambda backup: backup.is_differential is True, backups))
+
+
+def delete_backup(config, backup_name, all_nodes):
+    backups_to_purge = list()
+    monitoring = Monitoring(config=config.monitoring)
+
+    try:
+        storage = Storage(config=config.storage)
+        if all_nodes:
+            cluster_backup = storage.get_cluster_backup(backup_name)
+            # for fqdn, node_backup in cluster_backup.node_backups.items():
+            backups_to_purge = cluster_backup.node_backups.items()
+        else:
+            backups_to_purge += storage.get_node_backup(fqdn=storage.config.fqdn,
+                                                        backup_name=backup_name,
+                                                        differential_mode=True)
+            backups_to_purge += storage.get_node_backup(fqdn=storage.config.fqdn,
+                                                        backup_name=backup_name,
+                                                        differential_mode=False)
+
+        logging.info('Deleting Backup {}...'.format(backup_name))
+        purge_backups(storage, backups_to_purge)
+
+        logging.debug('Emitting metrics')
+        tags = ['medusa-node-backup', 'delete-error', 'DELETE-ERROR']
+        monitoring.send(tags, 0)
+    except Exception as e:
+        traceback.print_exc()
+        tags = ['medusa-node-backup', 'delete-error', 'DELETE-ERROR']
+        monitoring.send(tags, 1)
+        logging.error('This error happened during the delete of backup "{}": {}'.format(backup_name, str(e)))
+        sys.exit(1)
