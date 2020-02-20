@@ -155,7 +155,7 @@ class CqlSession(object):
     def tokenmap(self):
         token_map = self.cluster.metadata.token_map
         datacenter = self.datacenter()
-        logging.warning(datacenter)
+
         def get_host(host_token_pair):
             return host_token_pair[0]
 
@@ -172,8 +172,10 @@ class CqlSession(object):
         host_tokens_groups = itertools.groupby(host_token_pairs, key=get_host)
         host_tokens_pairs = [(host, list(map(get_token, tokens))) for host, tokens in host_tokens_groups]
 
+        logger.warning('before')
         for host, tokens in host_tokens_pairs
             logger.warning(host.address)
+        logger.warning('after')
 
         return {
             socket.gethostbyaddr(host.address)[0]: {
