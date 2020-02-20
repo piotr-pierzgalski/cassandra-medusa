@@ -160,11 +160,14 @@ class CqlSession(object):
             return host_token_pair[0]
 
         def get_host_address(host_token_pair):
-            return host_token_pair[0].address
+            return {
+				logging.warning(host.address)
+				host_token_pair[0].address
+			}
 
         def get_token(host_token_pair):
             return host_token_pair[1]
-
+		
         host_token_pairs = sorted(
             [(host, token.value) for token, host in token_map.token_to_host_owner.items()],
             key=get_host_address
@@ -173,7 +176,6 @@ class CqlSession(object):
         host_tokens_pairs = [(host, list(map(get_token, tokens))) for host, tokens in host_tokens_groups]
 
         return {
-			logging.debug(host.address)
             socket.gethostbyaddr(host.address)[0]: {
                 'tokens': tokens,
                 'is_up': host.is_up
