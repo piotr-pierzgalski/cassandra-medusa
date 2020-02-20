@@ -247,7 +247,7 @@ def main(config, backup_name_arg, stagger_time, mode):
             logging.warning("Throttling backup impossible. It's probable that ionice is not available.")
 
         logging.info('Creating snapshot')
-        logging.info('Saving tokenmap and schema')
+        logging.info('Saving tokenmap and schemaasdf')
 
         schema, tokenmap = get_schema_and_tokenmap(cassandra)
 
@@ -294,8 +294,8 @@ def main(config, backup_name_arg, stagger_time, mode):
 @retry(stop_max_attempt_number=7, wait_exponential_multiplier=10000, wait_exponential_max=120000)
 def get_schema_and_tokenmap(cassandra):
     with cassandra.new_session() as cql_session:
-        schema = cql_session.dump_schema()
         tokenmap = cql_session.tokenmap()
+        schema = cql_session.dump_schema()
     return schema, tokenmap
 
 

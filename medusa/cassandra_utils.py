@@ -155,7 +155,7 @@ class CqlSession(object):
     def tokenmap(self):
         token_map = self.cluster.metadata.token_map
         datacenter = self.datacenter()
-
+        logging.warning(datacenter)
         def get_host(host_token_pair):
             return host_token_pair[0]
 
