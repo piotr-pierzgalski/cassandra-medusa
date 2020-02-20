@@ -172,6 +172,9 @@ class CqlSession(object):
         host_tokens_groups = itertools.groupby(host_token_pairs, key=get_host)
         host_tokens_pairs = [(host, list(map(get_token, tokens))) for host, tokens in host_tokens_groups]
 
+        for host, tokens in host_tokens_pairs
+            logger.warning(host.address)
+
         return {
             socket.gethostbyaddr(host.address)[0]: {
                 'tokens': tokens,
