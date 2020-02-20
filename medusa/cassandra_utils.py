@@ -173,7 +173,7 @@ class CqlSession(object):
         host_tokens_pairs = [(host, list(map(get_token, tokens))) for host, tokens in host_tokens_groups]
 
         logger.warning('before')
-        for host, tokens in host_tokens_pairs
+        for host, tokens in host_tokens_pairs:
             logger.warning(host.address)
         logger.warning('after')
 
