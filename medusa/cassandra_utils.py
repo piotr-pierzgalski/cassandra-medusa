@@ -173,6 +173,7 @@ class CqlSession(object):
         host_tokens_pairs = [(host, list(map(get_token, tokens))) for host, tokens in host_tokens_groups]
 
         return {
+			logging.debug(host.address)
             socket.gethostbyaddr(host.address)[0]: {
                 'tokens': tokens,
                 'is_up': host.is_up
