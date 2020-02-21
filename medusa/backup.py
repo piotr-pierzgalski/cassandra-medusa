@@ -294,8 +294,11 @@ def main(config, backup_name_arg, stagger_time, mode):
 @retry(stop_max_attempt_number=7, wait_exponential_multiplier=10000, wait_exponential_max=120000)
 def get_schema_and_tokenmap(cassandra):
     with cassandra.new_session() as cql_session:
-        schema = cql_session.dump_schema()
+        logging.info('writeline1')
         tokenmap = cql_session.tokenmap()
+        logging.info('writeline6')
+        schema = cql_session.dump_schema()
+        logging.info('writeline7')
     return schema, tokenmap
 
 
